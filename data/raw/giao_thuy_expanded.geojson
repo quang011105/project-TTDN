@@ -1,0 +1,25 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Giao Thủy - Vườn Quốc Gia Xuân Thủy (Expanded AOI with Mangroves)",
+        "source": "Expanded bounding box to cover both inland communes and coastal mangroves",
+        "bbox": [106.3707567, 20.2000000, 106.5650000, 20.3003399]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [106.3707567, 20.2000000],
+            [106.5650000, 20.2000000],
+            [106.5650000, 20.3003399],
+            [106.3707567, 20.3003399],
+            [106.3707567, 20.2000000]
+          ]
+        ]
+      }
+    }
+  ]
+}
