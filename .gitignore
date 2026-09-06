@@ -34,6 +34,9 @@ htmlcov/
 Thumbs.db
 Desktop.ini
 
+# DVC local storage
+.dvc_storage/
+
 # Environment variables & secrets
 .env
 .env.*
