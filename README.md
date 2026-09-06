@@ -88,7 +88,7 @@ git commit -m "chore: update data version"
 
 ### 1. Trích xuất ảnh Sentinel-2 & WorldCover từ GEE
 ```bash
-python -m src.gee_extractor configs/giao_thuy_expanded.geojson data/raw/giao_thuy_expanded --start 2024-01-01 --end 2024-03-31 --project <YOUR_GCP_PROJECT_ID>
+python -m src.gee_extractor configs/giao_thuy_expanded.geojson data/raw/giao_thuy_expanded --start 2025-11-01 --end 2026-03-31 --project <YOUR_GCP_PROJECT_ID>
 ```
 
 ### 2. Ánh xạ 7 lớp nhãn (Remapping)
