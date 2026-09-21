@@ -52,14 +52,33 @@ CLASS_COLORS: dict[int, tuple[int, int, int]] = {
     3: (0, 191, 255),    # Thủy sản: Xanh nước biển
     4: (0, 100, 0),      # Rừng ngập mặn: Xanh lá đậm
     5: (34, 139, 34),    # Cây lâu năm & TV khác: Xanh rừng
-    6: (210, 180, 140),  # Đồng muối / Đất trống: Nâu cát
+    6: (249, 115, 22),   # Đồng muối / Đất trống: Cam đất sáng (#f97316)
 }
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 — Kiến trúc mô hình & Huấn luyện
+# ---------------------------------------------------------------------------
+NUM_CLASSES: int = 7
+IN_CHANNELS: int = 4
+PATCH_SIZE: int = 256
+DEFAULT_ENCODER: str = "resnet34"
+DEFAULT_ENCODER_WEIGHTS: str = "imagenet"
+
+# Thư mục đầu ra Giai đoạn 2
+OUTPUTS_DIR = PROJECT_ROOT / "outputs"
+CHECKPOINT_DIR = OUTPUTS_DIR / "checkpoints"
+LOG_DIR = OUTPUTS_DIR / "logs"
+MAP_DIR = OUTPUTS_DIR / "maps"
 
 
 def ensure_dirs() -> None:
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     INTERIM_DIR.mkdir(parents=True, exist_ok=True)
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    MAP_DIR.mkdir(parents=True, exist_ok=True)
 
 
 __all__ = [
@@ -80,5 +99,15 @@ __all__ = [
     "ESA_TO_LOCAL_CLASS",
     "CLASS_NAMES",
     "CLASS_COLORS",
+    "NUM_CLASSES",
+    "IN_CHANNELS",
+    "PATCH_SIZE",
+    "DEFAULT_ENCODER",
+    "DEFAULT_ENCODER_WEIGHTS",
+    "OUTPUTS_DIR",
+    "CHECKPOINT_DIR",
+    "LOG_DIR",
+    "MAP_DIR",
     "ensure_dirs",
 ]
+

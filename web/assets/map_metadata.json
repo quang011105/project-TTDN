@@ -1,0 +1,26 @@
+{
+  "leaflet_bounds": [
+    [
+      20.1983417,
+      106.3698298
+    ],
+    [
+      20.3020426,
+      106.566087
+    ]
+  ],
+  "center": [
+    20.2501922,
+    106.4679584
+  ],
+  "default_zoom": 12,
+  "min_zoom": 10,
+  "max_zoom": 17,
+  "width": 2078,
+  "height": 1098,
+  "layers": {
+    "lulc": "/assets/lulc_overlay.png",
+    "s2_rgb": "/assets/sentinel2_rgb.png",
+    "s2_cir": "/assets/sentinel2_cir.png"
+  }
+}

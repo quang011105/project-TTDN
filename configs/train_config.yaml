@@ -1,0 +1,58 @@
+# ===========================================================================
+# Cấu hình Huấn luyện Mô hình Semantic Segmentation U-Net (ResNet34) — Phase 2
+# ===========================================================================
+
+# === Kiến trúc Mô hình ===
+model:
+  encoder_name: "resnet34"
+  encoder_weights: "imagenet"
+  in_channels: 6            # Tensor 6 kênh (B2, B3, B4, B8 + NDVI + NDWI)
+  num_classes: 7
+
+# === Dữ liệu & DataLoader ===
+data:
+  patches_dir: "data/processed/patches"
+  patch_size: 256
+  batch_size: 8             # Giảm xuống 4 nếu chạy GPU VRAM < 6GB hoặc CPU RAM yếu
+  num_workers: 0            # 0 an toàn tối đa trên Windows; đặt 2 trên Google Colab / Linux
+  normalize_max: 10000.0
+  add_indices: true         # Tự động tính toán ghép kênh NDVI & NDWI
+
+# === Siêu tham số Huấn luyện & Tối ưu ===
+training:
+  max_epochs: 60
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  scheduler: "OneCycleLR"
+  freeze_encoder_epochs: 2  # Epoch 1–2: ổn định Decoder; Epoch 3+: fine-tune toàn mạng với Differential LR
+  gradient_accumulation_steps: 1
+  mixed_precision: true     # Bật AMP FP16 trên GPU CUDA, tự động bỏ qua trên CPU
+  early_stopping_patience: 15
+  seed: 42
+
+# === Hàm Loss ===
+loss:
+  ce_weight: 1.0
+  dice_weight: 1.0
+  ignore_index: 0
+  class_weights_path: "data/processed/class_weights.json"
+
+# === Thư mục Đầu ra ===
+output:
+  checkpoint_dir: "outputs/checkpoints"
+  log_dir: "outputs/logs"
+  map_dir: "outputs/maps"
+
+# === Inference & Hậu xử lý (Bước 2.7 & 2.8) ===
+inference:
+  patch_size: 256
+  overlap: 64
+  batch_size: 8
+  use_tta: true             # Test-Time Augmentation (flips)
+  postprocess: true         # Bật hậu xử lý làm mịn
+  kernel_size: 3            # Kích thước kernel hình thái học
+  morph_method: "majority"  # 'majority' hoặc 'opening_closing'
+  enable_morph: true
+  enable_mmu: true
+  mmu_pixels: 5             # Minimum Mapping Unit (5 pixels = 500 m² @ 10m)
+

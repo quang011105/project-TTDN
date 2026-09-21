@@ -1,0 +1,56 @@
+{
+  "pixel_size_m": 10.0,
+  "total_foreground_pixels": 2256537,
+  "total_area_ha": 22565.37,
+  "total_area_km2": 225.65,
+  "classes": {
+    "1": {
+      "class_id": 1,
+      "class_name": "Lúa",
+      "pixel_count": 801195,
+      "area_ha": 8011.95,
+      "area_km2": 80.12,
+      "percentage": 35.51
+    },
+    "2": {
+      "class_id": 2,
+      "class_name": "Khu dân cư",
+      "pixel_count": 396220,
+      "area_ha": 3962.2,
+      "area_km2": 39.62,
+      "percentage": 17.56
+    },
+    "3": {
+      "class_id": 3,
+      "class_name": "Thủy sản",
+      "pixel_count": 548038,
+      "area_ha": 5480.38,
+      "area_km2": 54.8,
+      "percentage": 24.29
+    },
+    "4": {
+      "class_id": 4,
+      "class_name": "Rừng ngập mặn",
+      "pixel_count": 143093,
+      "area_ha": 1430.93,
+      "area_km2": 14.31,
+      "percentage": 6.34
+    },
+    "5": {
+      "class_id": 5,
+      "class_name": "Cây lâu năm & Thực vật khác",
+      "pixel_count": 282736,
+      "area_ha": 2827.36,
+      "area_km2": 28.27,
+      "percentage": 12.53
+    },
+    "6": {
+      "class_id": 6,
+      "class_name": "Đồng muối / Đất trống",
+      "pixel_count": 85255,
+      "area_ha": 852.55,
+      "area_km2": 8.53,
+      "percentage": 3.78
+    }
+  }
+}

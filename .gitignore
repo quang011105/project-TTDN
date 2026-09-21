@@ -48,3 +48,11 @@ Desktop.ini
 data/processed/patches/
 data/interim/*
 !data/interim/.gitkeep
+
+# Model weights & Checkpoints (>100MB limit on GitHub)
+*.pth
+*.pt
+outputs/checkpoints/
+
+# Process and draft documentation (Excluded per user request)
+process/

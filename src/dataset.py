@@ -41,6 +41,39 @@ S2_BAND_STD: List[float] = [0.0513, 0.0527, 0.0617, 0.0892]
 
 
 # ---------------------------------------------------------------------------
+# Hàm tính toán chỉ số quang phổ viễn thám (NDVI & NDWI)
+# ---------------------------------------------------------------------------
+def compute_spectral_indices(image: np.ndarray, eps: float = 1e-6) -> np.ndarray:
+    """Tính toán 2 chỉ số quang phổ NDVI và NDWI và ghép vào tensor ảnh 4 kênh.
+
+    Args:
+        image: Mảng (4, H, W) kiểu float32 trong khoảng [0, 1] gồm:
+               Kênh 0: B2 (Blue), Kênh 1: B3 (Green),
+               Kênh 2: B4 (Red), Kênh 3: B8 (NIR).
+        eps: Hằng số nhỏ tránh chia cho 0.
+
+    Returns:
+        np.ndarray: Mảng (6, H, W) kiểu float32 trong dải [0, 1] gồm:
+        [B2, B3, B4, B8, NDVI_scaled, NDWI_scaled].
+    """
+    blue = image[0]
+    green = image[1]
+    red = image[2]
+    nir = image[3]
+
+    # 1. NDVI = (NIR - Red) / (NIR + Red)
+    ndvi = np.clip((nir - red) / (nir + red + eps), -1.0, 1.0)
+    ndvi_scaled = (ndvi + 1.0) / 2.0  # Chuyển [-1, 1] -> [0, 1]
+
+    # 2. NDWI = (Green - NIR) / (Green + NIR) (McFeeters)
+    ndwi = np.clip((green - nir) / (green + nir + eps), -1.0, 1.0)
+    ndwi_scaled = (ndwi + 1.0) / 2.0  # Chuyển [-1, 1] -> [0, 1]
+
+    stacked = np.concatenate([image, ndvi_scaled[np.newaxis, ...], ndwi_scaled[np.newaxis, ...]], axis=0)
+    return stacked.astype(np.float32)
+
+
+# ---------------------------------------------------------------------------
 # Dataset
 # ---------------------------------------------------------------------------
 class GeoTiffPatchDataset(Dataset):
@@ -55,10 +88,12 @@ class GeoTiffPatchDataset(Dataset):
         normalize: Nếu ``True``, chia pixel cho ``S2_NORMALIZE_MAX`` (min-max [0,1]).
         use_zscore: Nếu ``True``, áp dụng z-score thay cho min-max (dùng khi
                     normalize=True đã chia). Tắt theo mặc định.
+        add_indices: Nếu ``True``, tính toán thêm 2 chỉ số NDVI & NDWI tạo thành
+                     tensor 6 kênh [0, 1].
 
     Returns:
         ``(image, mask)`` với:
-        - ``image``: ``FloatTensor[4, 256, 256]`` trong khoảng [0, 1].
+        - ``image``: ``FloatTensor[C, 256, 256]`` (C=4 hoặc C=6) trong khoảng [0, 1].
         - ``mask`` : ``LongTensor[256, 256]`` giá trị 0–6.
     """
 
@@ -69,6 +104,7 @@ class GeoTiffPatchDataset(Dataset):
         transform: Optional[Callable] = None,
         normalize: bool = True,
         use_zscore: bool = False,
+        add_indices: bool = False,
     ) -> None:
         if split not in ("train", "test"):
             raise ValueError(f"split phải là 'train' hoặc 'test', nhận được: {split!r}")
@@ -77,6 +113,7 @@ class GeoTiffPatchDataset(Dataset):
         self.transform = transform
         self.normalize = normalize
         self.use_zscore = use_zscore
+        self.add_indices = add_indices
 
         self.images_dir = patches_dir / split / "images"
         self.masks_dir = patches_dir / split / "masks"
@@ -140,9 +177,12 @@ class GeoTiffPatchDataset(Dataset):
             image = image_hwc.transpose(2, 0, 1)  # (4, H, W)
 
         # --- Chuyển sang Tensor ---
+        if self.add_indices:
+            image = compute_spectral_indices(image)
+
         image_tensor: Tensor = torch.from_numpy(
             np.ascontiguousarray(image, dtype=np.float32)
-        )  # FloatTensor[4, H, W]
+        )  # FloatTensor[C, H, W] (C=4 hoặc C=6)
         mask_tensor: Tensor = torch.from_numpy(
             np.ascontiguousarray(mask, dtype=np.int64)
         )  # LongTensor[H, W]
@@ -159,6 +199,7 @@ class GeoTiffPatchDataset(Dataset):
             "masks_dir": str(self.masks_dir),
             "normalize": self.normalize,
             "use_zscore": self.use_zscore,
+            "add_indices": self.add_indices,
             "n_classes": len(CLASS_NAMES),
             "class_names": CLASS_NAMES,
         }
@@ -174,6 +215,7 @@ def get_dataloaders(
     train_transform: Optional[Callable] = None,
     val_transform: Optional[Callable] = None,
     normalize: bool = True,
+    add_indices: bool = False,
     pin_memory: bool = True,
     persistent_workers: bool = False,
 ) -> Tuple[DataLoader, DataLoader]:
@@ -186,39 +228,26 @@ def get_dataloaders(
         train_transform: Augmentation pipeline cho tập train (albumentations.Compose).
         val_transform: Augmentation pipeline cho tập test (thường là None hoặc chỉ resize).
         normalize: Chuẩn hoá pixel /10000.
+        add_indices: Tính toán thêm NDVI và NDWI thành tensor 6 kênh.
         pin_memory: ``True`` khi có GPU (giảm latency CPU→GPU).
         persistent_workers: ``True`` khi ``num_workers > 0`` và train nhiều epoch.
 
     Returns:
         ``(train_loader, test_loader)``.
-
-    Example::
-
-        from src.dataset import get_dataloaders
-        from src.transforms import get_train_transform, get_val_transform
-
-        train_loader, test_loader = get_dataloaders(
-            batch_size=8,
-            num_workers=2,
-            train_transform=get_train_transform(),
-            val_transform=get_val_transform(),
-        )
-        for images, masks in train_loader:
-            # images: FloatTensor[B, 4, 256, 256]
-            # masks:  LongTensor[B, 256, 256]
-            ...
     """
     train_ds = GeoTiffPatchDataset(
         split="train",
         patches_dir=patches_dir,
         transform=train_transform,
         normalize=normalize,
+        add_indices=add_indices,
     )
     test_ds = GeoTiffPatchDataset(
         split="test",
         patches_dir=patches_dir,
         transform=val_transform,
         normalize=normalize,
+        add_indices=add_indices,
     )
 
     _persistent = persistent_workers and num_workers > 0

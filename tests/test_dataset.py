@@ -207,6 +207,58 @@ class TestGetDataloaders(unittest.TestCase):
         # Với 4 patch, batch_size=2, drop_last=True → 2 batch × 2 = 4 lần gọi
         self.assertEqual(call_count["n"], 4)
 
+    # --- 11. Kiểm tra tính toán chỉ số NDVI & NDWI ---
+    def test_compute_spectral_indices(self) -> None:
+        from src.dataset import compute_spectral_indices
+
+        # Giả lập ảnh 4 kênh [B2, B3, B4, B8]
+        # Pixel thực vật: B8 cao (0.8), B4 thấp (0.1) -> NDVI cao
+        # Pixel nước: B3 cao (0.6), B8 thấp (0.1) -> NDWI cao
+        img = np.zeros((4, 10, 10), dtype=np.float32)
+        img[3, 0, 0] = 0.8  # NIR
+        img[2, 0, 0] = 0.1  # Red
+        img[1, 1, 1] = 0.6  # Green
+        img[3, 1, 1] = 0.1  # NIR
+
+        out = compute_spectral_indices(img)
+        self.assertEqual(out.shape, (6, 10, 10))
+        # Kênh 4 là NDVI_scaled, kênh 5 là NDWI_scaled
+        # NDVI tại (0,0) = (0.8 - 0.1)/(0.8 + 0.1) = 0.7/0.9 ≈ 0.7778 -> scaled = (0.7778 + 1)/2 ≈ 0.8889
+        self.assertGreater(float(out[4, 0, 0]), 0.8)
+        # NDWI tại (1,1) = (0.6 - 0.1)/(0.6 + 0.1) = 0.5/0.7 ≈ 0.7143 -> scaled = (0.7143 + 1)/2 ≈ 0.8571
+        self.assertGreater(float(out[5, 1, 1]), 0.8)
+        # Toàn bộ dải giá trị phải trong [0, 1]
+        self.assertGreaterEqual(float(np.min(out[4:])), 0.0)
+        self.assertLessEqual(float(np.max(out[4:])), 1.0)
+
+    # --- 12. Kiểm tra Dataset trả về tensor 6 kênh khi add_indices=True ---
+    def test_dataset_add_indices_6_channels(self) -> None:
+        from src.dataset import GeoTiffPatchDataset
+
+        ds = GeoTiffPatchDataset(
+            "train",
+            patches_dir=self.patches_dir,
+            add_indices=True,
+        )
+        img, msk = ds[0]
+        self.assertEqual(img.shape, (6, 256, 256))
+        self.assertEqual(msk.shape, (256, 256))
+        self.assertEqual(img.dtype, torch.float32)
+
+    # --- 13. Kiểm tra DataLoader trả về batch 6 kênh khi add_indices=True ---
+    def test_dataloaders_add_indices(self) -> None:
+        train_dl, test_dl = self.get_dataloaders(
+            patches_dir=self.patches_dir,
+            batch_size=2,
+            num_workers=0,
+            pin_memory=False,
+            add_indices=True,
+        )
+        imgs, msks = next(iter(train_dl))
+        self.assertEqual(imgs.shape, (2, 6, 256, 256))
+        self.assertEqual(msks.shape, (2, 256, 256))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+

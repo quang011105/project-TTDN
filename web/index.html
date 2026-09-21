@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Giám sát Quy hoạch Sử dụng đất qua Viễn thám — Giao Thủy</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- TOP NAVIGATION BAR -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-satellite-dish pulse-icon"></i>
+                    <div class="brand-text">
+                        <h1>LULC SATELLITE MONITOR</h1>
+                        <span>Hệ thống Giám sát Quy hoạch Sử dụng Đất Viễn thám AI</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-center">
+                <div class="model-badge">
+                    <span class="badge-dot"></span>
+                    <span class="badge-text">AI ResNet-34 6-Band (Sentinel-2 + NDVI/NDWI)</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="quick-stats">
+                    <div class="stat-pill">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <span>Giao Thủy, Nam Định</span>
+                    </div>
+                    <div class="stat-pill">
+                        <i class="fa-solid fa-vector-square"></i>
+                        <span>22,565.37 ha</span>
+                    </div>
+                </div>
+                <button id="themeToggleBtn" class="icon-btn" title="Chuyển chế độ Sáng / Tối">
+                    <i class="fa-solid fa-sun"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN WORKSPACE (3-COLUMN LAYOUT) -->
+        <main class="app-workspace">
+            <!-- LEFT SIDEBAR: CONTROLS & LAYERS -->
+            <aside class="sidebar-left glass-panel">
+                <div class="panel-section">
+                    <h3 class="section-title"><i class="fa-solid fa-sliders"></i> Chọn Địa bàn Khảo sát</h3>
+                    <div class="control-group">
+                        <label for="adminSelect">Đơn vị Hành chính:</label>
+                        <select id="adminSelect" class="form-select">
+                            <option value="giao_thuy" selected>Toàn Huyện Giao Thủy</option>
+                            <!-- Các xã sẽ được nạp tự động từ API -->
+                        </select>
+                    </div>
+                    <div id="unitDescBox" class="unit-description">
+                        Đang tải thông tin địa bàn...
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="section-title"><i class="fa-solid fa-layer-group"></i> Lớp Bản đồ & Ảnh Vệ tinh</h3>
+                    
+                    <div class="layer-item">
+                        <label class="toggle-control">
+                            <input type="checkbox" id="layerLulcToggle" checked>
+                            <span class="control-indicator"></span>
+                            <span class="layer-label">Bản đồ AI Phân loại LULC (6 Lớp)</span>
+                        </label>
+                        <div class="opacity-slider-container">
+                            <span>Độ mờ:</span>
+                            <input type="range" id="lulcOpacity" min="0" max="100" value="85">
+                            <span id="opacityVal">85%</span>
+                        </div>
+                    </div>
+
+                    <div class="layer-item">
+                        <label class="toggle-control">
+                            <input type="checkbox" id="layerS2RgbToggle">
+                            <span class="control-indicator"></span>
+                            <span class="layer-label">Ảnh Vệ tinh RGB Tự nhiên (B4-3-2)</span>
+                        </label>
+                    </div>
+
+                    <div class="layer-item">
+                        <label class="toggle-control">
+                            <input type="checkbox" id="layerS2CirToggle">
+                            <span class="control-indicator"></span>
+                            <span class="layer-label">Ảnh Hồng ngoại giả CIR (B8-4-3)</span>
+                        </label>
+                    </div>
+
+                    <div class="control-group" style="margin-top: 12px;">
+                        <label for="baseMapSelect">Bản đồ Nền Cơ sở:</label>
+                        <select id="baseMapSelect" class="form-select">
+                            <option value="esri_satellite" selected>Ảnh Vệ tinh Esri World Imagery</option>
+                            <option value="osm">Bản đồ Giao thông OpenStreetMap</option>
+                            <option value="carto_dark">Bản đồ Tối CartoDB Dark Matter</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="section-title"><i class="fa-solid fa-code-compare"></i> Chế độ Đối chiếu (Swipe)</h3>
+                    <p class="section-hint">Kéo thanh trượt trên bản đồ để so sánh trực quan giữa ảnh vệ tinh thực tế và phân loại AI.</p>
+                    <div class="toggle-wrapper">
+                        <button id="swipeToggleBtn" class="btn btn-primary btn-block">
+                            <i class="fa-solid fa-arrows-left-right"></i> Bật Thanh trượt So sánh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="section-title"><i class="fa-solid fa-circle-info"></i> Hướng dẫn</h3>
+                    <ul class="help-list">
+                        <li><i class="fa-solid fa-mouse-pointer"></i> <strong>Click chuột</strong> lên bản đồ để tra cứu loại đất tại pixel đó.</li>
+                        <li><i class="fa-solid fa-location-crosshairs"></i> Chọn xã trong danh sách để bản đồ tự động bay tới vị trí.</li>
+                        <li><i class="fa-solid fa-file-arrow-down"></i> Tải báo cáo số liệu CSV ở cột bên phải.</li>
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- CENTER WORKSPACE: LEAFLET MAP -->
+            <section class="map-viewport">
+                <div id="map"></div>
+                
+                <!-- Map Floating Toolbars -->
+                <div class="map-top-bar">
+                    <div class="map-chip" id="mapStatusChip">
+                        <i class="fa-solid fa-circle-check text-success"></i> Sẵn sàng truy vấn
+                    </div>
+                    <div class="map-chip" id="coordsChip">
+                        <i class="fa-solid fa-crosshairs"></i> Tọa độ: 20.2502°N, 106.4679°E
+                    </div>
+                </div>
+
+                <!-- Custom Legend Overlay -->
+                <div class="map-legend-overlay glass-panel">
+                    <div class="legend-header">
+                        <h4>Chú giải 6 Lớp Đất</h4>
+                        <button id="legendCollapseBtn" class="icon-btn-sm"><i class="fa-solid fa-chevron-down"></i></button>
+                    </div>
+                    <div id="legendBody" class="legend-body">
+                        <!-- Legend items injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Point Inspection Modal / Toast -->
+                <div id="inspectPopup" class="inspect-card glass-panel hidden">
+                    <div class="inspect-header">
+                        <span id="inspectClassBadge" class="class-badge">Đất trồng Lúa</span>
+                        <button id="closeInspectBtn" class="icon-btn-sm"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="inspect-body">
+                        <div class="inspect-row">
+                            <span>Tọa độ WGS84:</span>
+                            <strong id="inspectCoords">20.2512, 106.4523</strong>
+                        </div>
+                        <div class="inspect-row">
+                            <span>Chỉ số Pixel:</span>
+                            <strong id="inspectPixelIdx">Hàng 450, Cột 820</strong>
+                        </div>
+                        <p id="inspectDesc" class="inspect-desc">Mô tả quy hoạch và hiện trạng đất...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT SIDEBAR: DASHBOARD & STATS -->
+            <aside class="sidebar-right glass-panel">
+                <div class="panel-section">
+                    <div class="section-header-flex">
+                        <h3 class="section-title"><i class="fa-solid fa-chart-pie"></i> Cơ cấu Diện tích Đất</h3>
+                        <button id="exportCsvBtn" class="btn btn-sm btn-outline" title="Tải xuống file CSV">
+                            <i class="fa-solid fa-download"></i> CSV
+                        </button>
+                    </div>
+                    
+                    <div class="total-area-card">
+                        <div class="total-title">TỔNG DIỆN TÍCH KHẢO SÁT</div>
+                        <div class="total-numbers">
+                            <span id="totalAreaHa" class="number-highlight">22,565.37</span>
+                            <span class="unit-highlight">ha</span>
+                            <span class="total-sub">(~<span id="totalAreaKm2">225.65</span> km²)</span>
+                        </div>
+                    </div>
+
+                    <!-- Doughnut Chart Container -->
+                    <div class="chart-container">
+                        <canvas id="lulcChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="section-title"><i class="fa-solid fa-list-check"></i> Chi tiết 6 Loại Đất</h3>
+                    <div id="classListContainer" class="class-kpi-list">
+                        <!-- KPI cards injected by JS -->
+                        <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu...</div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Leaflet Side-by-Side (Swipe Tool) -->
+    <script src="https://unpkg.com/leaflet-side-by-side@2.2.0/index.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Custom App JS -->
+    <script src="/app.js"></script>
+</body>
+</html>
