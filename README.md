@@ -11,7 +11,6 @@ Hệ thống phân vùng và giám sát lớp phủ sử dụng đất (LULC) t�
 - **Mô hình học sâu hiệu năng cao:** **ResNet-34 U-Net** kết hợp đầu vào 6 kênh phổ (B2, B3, B4, B8, NDVI, NDWI) và hàm mất mát kết hợp `Combo Loss (Weighted CE + Focal + Dice)`.
 - **Kết quả thực nghiệm:** Đạt **53.65% Validation mIoU** và **53.76% Golden Test mIoU** (OA: **73.80%**, Kappa: **0.642**).
 - **Hệ thống WebGIS hiện đại:** Giao diện Sleek Glassmorphism Dark Mode, tích hợp thanh trượt so sánh vệ tinh (Swipe Tool), tra cứu pixel tức thì (< 30ms) và xuất báo cáo diện tích CSV.
-- **Độ tin cậy kỹ thuật:** Đạt chuẩn **74/74 Unit Tests (100% Passed)**.
 
 ---
 
@@ -85,8 +84,4 @@ Mở trình duyệt web truy cập: **[http://127.0.0.1:8000](http://127.0.0.1:8
 python -m src.trainer --config configs/train_config.yaml
 ```
 
-### 4. Chạy Kiểm thử Tự động (Tests)
-```powershell
-python -m unittest discover -s tests -p "test_*.py"
-```
-*(Kết quả: 74/74 tests pass 100%)*
+
