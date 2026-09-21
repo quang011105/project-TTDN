@@ -9,7 +9,7 @@ Hệ thống phân vùng và giám sát lớp phủ sử dụng đất (LULC) t�
 - **Pipeline khép kín (End-to-End):** Từ thu nhận ảnh vệ tinh đa phổ, tiền xử lý, huấn luyện AI, hậu xử lý MMU đến ứng dụng WebGIS tương tác.
 - **Chống rò rỉ dữ liệu (Zero Data Leakage):** Áp dụng kỹ thuật **Spatial Block Split (8x8 khối địa lý độc lập)** thay vì chia ngẫu nhiên.
 - **Mô hình học sâu hiệu năng cao:** **ResNet-34 U-Net** kết hợp đầu vào 6 kênh phổ (B2, B3, B4, B8, NDVI, NDWI) và hàm mất mát kết hợp `Combo Loss (Weighted CE + Focal + Dice)`.
-- **Kết quả thực nghiệm:** Đạt **53.65% Validation mIoU** và **53.76% Golden Test mIoU** (OA: **73.80%**, Kappa: **0.642**).
+- **Kết quả thực nghiệm:** Đạt **53.65% Validation mIoU** và **53.76% Golden Test mIoU** (OA: **78.17%**, Kappa: **0.701**, Macro F1: **65.83%**).
 - **Hệ thống WebGIS hiện đại:** Giao diện Sleek Glassmorphism Dark Mode, tích hợp thanh trượt so sánh vệ tinh (Swipe Tool), tra cứu pixel tức thì (< 30ms) và xuất báo cáo diện tích CSV.
 
 ---
